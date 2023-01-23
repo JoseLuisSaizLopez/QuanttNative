@@ -9,6 +9,7 @@ Utiliza el marco de composición Java Swing para acceder a la decoración nativa
 ## QuickStart
 
 Para empezar a utilizar QuanttNative, descargue el archivo .jar y añádalo como librería dentro de su proyecto de JavaFX.
+[Download last release](https://github.com/JoseLuisSaizLopez/QuanttNative/releases/tag/V1.0)
 
 Una vez añadido, utilice la clase QuanttNative para generar una ventana nativa del sistema con la personalización que desee.
 
