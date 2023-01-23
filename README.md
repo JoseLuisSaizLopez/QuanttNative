@@ -43,3 +43,43 @@ public class QuanttDemo extends Application {
     }
 }
 ```
+## Guía de estilos
+
+Esta es una pequeña introducción para configurar la estética de la ventana
+
+### TitleBar
+
+- Background Color
+```java 
+    //new QuantNative()...
+    .add(QuanttNative.ParamKey.TITLEBAR_BACKGROUND_COLOR, new Color(0x463088))
+    //..
+```
+
+- Foreground Color
+```java 
+    //new QuantNative()...
+      .add(QuanttNative.ParamKey.TITLEBAR_FOREGROUND_COLOR, new Color(0xC4C1DA))
+    //..
+```
+
+- Title Text
+```java 
+    //new QuantNative()...
+      .add(QuanttNative.ParamKey.TITLE_STRING, "yourtitle")
+    //..
+```
+
+- Image icon
+```java 
+    //new QuantNative()...
+      .add(ParamKey.ICON_IMAGE, yourIMAGEicon);
+    //..
+```
+
+- Frame initial size
+```java 
+    //new QuantNative()...
+    .add(QuanttNative.ParamKey.SIZE_DIMENSION, new Dimension(width, height))
+    //..
+```
