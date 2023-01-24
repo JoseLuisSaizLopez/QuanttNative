@@ -29,7 +29,7 @@ public class QuanttDemo extends Application {
                         .add(QuanttNative.ParamKey.TITLEBAR_BACKGROUND_COLOR, new Color(0x463088))
                         .add(QuanttNative.ParamKey.TITLEBAR_FOREGROUND_COLOR, new Color(0xC4C1DA))
         );
-        qNative.loadScene("hello-view.fxml");
+        qNative.loadScene(HelloApplication.class.getResource("hello-view.xml"));
         qNative.start();
     }
 

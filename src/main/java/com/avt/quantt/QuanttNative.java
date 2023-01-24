@@ -11,6 +11,7 @@ import javax.swing.*;
 import java.awt.*;
 import java.io.File;
 import java.io.IOException;
+import java.net.URL;
 import java.util.HashMap;
 import java.util.Map;
 
@@ -64,9 +65,9 @@ public class QuanttNative {
     ==========================================
     */
 
-    public void loadScene(String fxmlPath) {
+    public void loadScene(URL fxmlURL) {
         try {
-            FXMLLoader fxmlLoader = new FXMLLoader(HelloApplication.class.getResource(fxmlPath));
+            FXMLLoader fxmlLoader = new FXMLLoader(fxmlURL);
             scene = new Scene(fxmlLoader.load(), size.width, size.height);
         } catch (IOException e) {
             throw new RuntimeException(e);
@@ -111,8 +112,8 @@ public class QuanttNative {
 
     private void setDefaultUIStyle() {
         try {
-            Image icon = ImageIO.read(new File("src/main/resources/com/avt/quantt/quantt-logo-32px.png"));
-
+            URL url = this.getClass().getResource("quantt-logo-32px.png");
+            Image icon = ImageIO.read(url);
             params = new QParams()
                     .add(ParamKey.SIZE_DIMENSION, new Dimension(300,400))
                     .add(ParamKey.TITLE_STRING, "Quantt Application")
@@ -206,7 +207,7 @@ public class QuanttNative {
     }
 
     //Supported keys
-    enum ParamKey {
+    public enum ParamKey {
         TITLEBAR_BACKGROUND_COLOR,
         TITLEBAR_FOREGROUND_COLOR,
         TITLE_STRING,
