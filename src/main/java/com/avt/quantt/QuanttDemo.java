@@ -1,35 +1,56 @@
 package com.avt.quantt;
 
-import com.formdev.flatlaf.FlatDarkLaf;
 import javafx.application.Application;
-import javafx.application.Platform;
-import javafx.embed.swing.JFXPanel;
-import javafx.fxml.FXMLLoader;
-import javafx.scene.Scene;
 import javafx.stage.Stage;
 
 import javax.imageio.ImageIO;
-import javax.swing.*;
 import java.awt.*;
-import java.io.File;
 import java.io.IOException;
-import java.util.ArrayList;
-import java.util.Collections;
-import java.util.Enumeration;
+import java.util.Objects;
 
 public class QuanttDemo extends Application {
 
     @Override
     public void start(Stage stage) {
 
+        //Load QNative
         QuanttNative qNative = new QuanttNative(
+                //Title params
                 new QuanttNative.QParams()
                         .add(QuanttNative.ParamKey.TITLE_STRING, "qNativeDemo")
-                        .add(QuanttNative.ParamKey.SIZE_DIMENSION, new Dimension(720, 900))
-                        .add(QuanttNative.ParamKey.TITLEBAR_BACKGROUND_COLOR, new Color(0x463088))
-                        .add(QuanttNative.ParamKey.TITLEBAR_FOREGROUND_COLOR, new Color(0xC4C1DA))
+                        .add(QuanttNative.ParamKey.SIZE_DIMENSION, new Dimension(720, 600))
+                        .add(QuanttNative.ParamKey.TITLEBAR_BACKGROUND_COLOR, new Color(0x29A4C0))
+                        .add(QuanttNative.ParamKey.TITLEBAR_FOREGROUND_COLOR, new Color(0xECECEC)),
+
+                //Menu composer
+                new QuanttNative.QTitleMenu()
+                        .addMenu("File", new QuanttNative.Option[]{
+                                new QuanttNative.Option("Create new project"),
+                                new QuanttNative.Option("Open project"),
+                                new QuanttNative.Option("Close project", false),    //Disabled
+                                new QuanttNative.Option("Save", false), //Disabled
+                                new QuanttNative.Option("Save as...", false),   //Disabled
+                                new QuanttNative.Option("Exit")
+                        })
+                        .addMenu("Edit", new QuanttNative.Option[]{
+                                new QuanttNative.Option("Undo last", false),    //Disabled
+                                new QuanttNative.Option("Redo last", false),    //Disabled
+                                new QuanttNative.Option("Change color...", false),  //Disabled
+                                new QuanttNative.Option("Edit configurations...", false)    //Disabled
+                        })
+                        .addMenu("Help", null)
+                        .addMenuOptionListener((key, option) -> {
+                            switch (option) {
+                                case "Exit": System.exit(0); break;
+                                default: System.out.println(option); break;
+                            }
+                        })
         );
-        qNative.loadScene(HelloApplication.class.getResource("hello-view.xml"));
+
+        //Set Javafx scene
+        qNative.loadScene(this.getClass().getResource("hello-view.fxml"));
+
+        //Run application
         qNative.start();
     }
 

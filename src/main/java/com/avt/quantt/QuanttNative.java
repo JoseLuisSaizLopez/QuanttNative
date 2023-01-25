@@ -9,11 +9,9 @@ import javafx.scene.Scene;
 import javax.imageio.ImageIO;
 import javax.swing.*;
 import java.awt.*;
-import java.io.File;
 import java.io.IOException;
 import java.net.URL;
-import java.util.HashMap;
-import java.util.Map;
+import java.util.*;
 
 public class QuanttNative {
 
@@ -29,6 +27,7 @@ public class QuanttNative {
     private Scene scene;
     private Dimension size = new Dimension(600, 320);
     private QParams params;
+    private QTitleMenu titleMenu;
 
 
 
@@ -46,15 +45,27 @@ public class QuanttNative {
 
     public QuanttNative(String title) {
         setDefaultUIStyle();
-        setCustomUIStyle();
         params.params.put(ParamKey.TITLE_STRING, title);
+        setCustomUIStyle();
     }
 
     public QuanttNative(QParams params) {
         setDefaultUIStyle();
-        System.out.println(params.getImage(ParamKey.ICON_IMAGE));
-        setCustomUIStyle();
         this.params.params.putAll(params.params);
+        setCustomUIStyle();
+    }
+
+    public QuanttNative(QParams params, QTitleMenu menu) {
+        setDefaultUIStyle();
+        this.params.params.putAll(params.params);
+        this.titleMenu = menu;
+        setCustomUIStyle();
+    }
+
+    public QuanttNative(QTitleMenu menu) {
+        setDefaultUIStyle();
+        this.titleMenu = menu;
+        setCustomUIStyle();
     }
 
 
@@ -110,6 +121,11 @@ public class QuanttNative {
     ==========================================
     */
 
+    public void exit(int status) {
+        rootPane.setVisible(false);
+        System.exit(status);
+    }
+
     private void setDefaultUIStyle() {
         try {
             URL url = this.getClass().getResource("quantt-logo-32px.png");
@@ -127,9 +143,30 @@ public class QuanttNative {
 
     private void setCustomUIStyle() {
         try {
+
+            //Title bar
             UIManager.setLookAndFeel( new FlatDarkLaf() );
             UIManager.put("TitlePane.showIcon", true);
             UIManager.put("TitlePane.iconSize", new Dimension(20,20));
+            UIManager.put("TitlePane.menuBarEmbedded", true);
+
+            //Foreground color
+            Color foregroundColor = createForegroundColor((Color) params.params.get(ParamKey.TITLEBAR_BACKGROUND_COLOR));
+
+            //Menu bar
+            UIManager.put("MenuBar.foreground", params.params.get(ParamKey.TITLEBAR_FOREGROUND_COLOR)); //transparent
+            UIManager.put("MenuBar.hoverBackground", new Color(0x0000000, true)); //transparent
+            UIManager.put("MenuBar.selectionBackground", getSimilarColor((Color) params.params.get(ParamKey.TITLEBAR_BACKGROUND_COLOR), 0.1f, -0.3f));
+            UIManager.put("MenuBar.selectionForeground", params.params.get(ParamKey.TITLEBAR_FOREGROUND_COLOR));
+
+            //Menu item
+            UIManager.put("MenuItem.opaque", true);
+            UIManager.put("MenuItem.foreground",  getSimilarColor((Color) params.params.get(ParamKey.TITLEBAR_FOREGROUND_COLOR), 0.05f, 0f));
+            UIManager.put("MenuItem.background", getSimilarColor((Color) params.params.get(ParamKey.TITLEBAR_BACKGROUND_COLOR), 0.05f, -0.1f));
+            UIManager.put("MenuItem.selectionBackground", getSimilarColor((Color) params.params.get(ParamKey.TITLEBAR_BACKGROUND_COLOR), 0.1f, -0.1f));
+            UIManager.put("MenuItem.selectionForeground", params.params.get(ParamKey.TITLEBAR_FOREGROUND_COLOR));
+            UIManager.put("MenuItem.disabledForeground", getSimilarColor((Color) params.params.get(ParamKey.TITLEBAR_FOREGROUND_COLOR), 0.2f, 0.1f, 0.35f));
+
         } catch( Exception ex ) {
             System.err.println( "Failed to initialize LaF" );
         }
@@ -138,6 +175,17 @@ public class QuanttNative {
     public void start() {
         //Create rootPane
         rootPane = new JFrame(params.getString(ParamKey.TITLE_STRING));
+
+        //Create embed menu bar
+        if (titleMenu!=null && !titleMenu.menus.isEmpty()) {
+            JMenuBar menuBar = new JMenuBar();
+            for (Map.Entry<String,Option[]> menu: titleMenu.menus.entrySet()) {
+                menuBar.add(titleMenu.createMenu(menu));
+            }
+            //Add event listener
+            implementMenuOptionListener(menuBar);
+            rootPane.setJMenuBar(menuBar);
+        }
 
         //Create viewport
         JFXPanel jfxPanel = new JFXPanel();
@@ -153,6 +201,65 @@ public class QuanttNative {
         Platform.runLater(() -> jfxPanel.setScene(scene));
     }
 
+
+
+    /*
+    ==========================================
+    =  Color composers                       =
+    ==========================================
+    */
+    private boolean isColorLight(Color color) {
+        int r = color.getRed();
+        int g = color.getGreen();
+        int b = color.getBlue();
+        double brightness = (0.299*r + 0.587*g + 0.114*b) / 255;
+
+        return brightness >= 0.5;
+    }
+
+    private Color createForegroundColor(Color backgroundColor) {
+        boolean isBackgroundLight = isColorLight(backgroundColor);
+        if (isBackgroundLight) {
+            return new Color(0x1A1A1A);
+        } else {
+            return new Color(0xF3F3F3);
+        }
+    }
+
+    private Color getSimilarColor(Color backgroundColor, float thresholdBrightness, float thresholdSaturation) {
+        int r = backgroundColor.getRed();
+        int g = backgroundColor.getGreen();
+        int b = backgroundColor.getBlue();
+
+        double brightness = (0.299*r + 0.587*g + 0.114*b) / 255;
+
+        if (brightness < 0.5) {
+            r = (int) (r * (1 + thresholdBrightness));
+            g = (int) (g * (1 + thresholdBrightness));
+            b = (int) (b * (1 + thresholdBrightness));
+        } else {
+            r = (int) (r * (1 - thresholdBrightness));
+            g = (int) (g * (1 - thresholdBrightness));
+            b = (int) (b * (1 - thresholdBrightness));
+        }
+
+        Color colorBrightness = new Color(r,g,b);
+
+        float[] hsb = Color.RGBtoHSB(colorBrightness.getRed(), colorBrightness.getGreen(), colorBrightness.getBlue(), null);
+        hsb[1] = Math.min(1, Math.max(0, hsb[1] + thresholdSaturation));
+
+        return Color.getHSBColor(hsb[0], hsb[1], hsb[2]);
+    }
+
+    private Color getSimilarColor(Color backgroundColor, float thresholdBrightness, float thresholdSaturation, float alpha) {
+        Color modified = getSimilarColor(backgroundColor, thresholdBrightness, thresholdSaturation);
+
+        int r = backgroundColor.getRed();
+        int g = backgroundColor.getGreen();
+        int b = backgroundColor.getBlue();
+
+        return new Color(r,g,b, alpha);
+    }
 
 
     /*
@@ -213,6 +320,122 @@ public class QuanttNative {
         TITLE_STRING,
         SIZE_DIMENSION,
         ICON_IMAGE
+    }
+
+
+
+    /*
+    ==========================================
+    =  MENU OPTIONS                          =
+    ==========================================
+    */
+
+    public static class QTitleMenu {
+
+        private LinkedHashMap<String, Option[]> menus = new LinkedHashMap<>();
+
+        private MenuOptionListener menuListener;
+
+        public QTitleMenu() {}
+
+        public QTitleMenu addMenu(String menuTitle, Option[] options) {
+            menus.put(menuTitle, options);
+            return this;
+        }
+
+        private JMenu createMenu(Map.Entry<String, Option[]> menu) {
+            JMenu menuPane = new JMenu(menu.getKey());
+
+            if (menu.getValue()!=null && menu.getValue().length>0) {
+                for (Option option:menu.getValue()) {
+                    menuPane.add(option.getPane());
+                    //Set icon
+                }
+            }
+
+            return menuPane;
+        }
+
+        public QTitleMenu addMenuOptionListener(MenuOptionListener listener) {
+            this.menuListener = listener;
+            return this;
+        }
+
+    }
+
+    public static class Option {
+
+        private String name;
+        private boolean enabled = true;
+        private JMenuItem optionPane;
+        private Icon icon;
+
+        public Option(String name) {
+            this.name = name;
+        }
+
+        public Option(String name, boolean isEnabled) {
+            this.name = name;
+            enabled = isEnabled;
+        }
+
+        public Option(String name, Image icon, boolean isEnabled) {
+            this.name = name;
+            enabled = isEnabled;
+            this.icon = (Icon) icon;
+        }
+
+        public Option(String name, Image icon) {
+            this.name = name;
+            this.icon = new ImageIcon(icon);
+        }
+
+        private JMenuItem getPane() {
+            if (optionPane==null) {
+                optionPane=new JMenuItem(name);
+                optionPane.setEnabled(enabled);
+                if (icon!=null) {
+                    optionPane.setIcon(icon);
+                }
+            }
+            return optionPane;
+        }
+
+        public boolean isEnabled() {
+            return enabled;
+        }
+
+        public void setEnabled(boolean enabled) {
+            this.enabled = enabled;
+            optionPane.setVisible(enabled);
+        }
+
+        public String getName() {
+            return this.name;
+        }
+
+        public void setName(String name) {
+            this.name = name;
+        }
+
+    }
+
+    private void implementMenuOptionListener(JMenuBar menuBar) {
+        if (titleMenu!=null && !titleMenu.menus.isEmpty()) {
+            if (titleMenu.menuListener!=null) {
+                for (int i = 0; i < menuBar.getMenuCount(); i++) {
+                    JMenu menu = menuBar.getMenu(i);
+                    for (int j = 0; j < menu.getItemCount(); j++) {
+                        JMenuItem item = menu.getItem(j);
+                        item.addActionListener((e)->titleMenu.menuListener.onOptionClicked(menu.getText(), item.getText()));
+                    }
+                }
+            }
+        }
+    }
+
+    public interface MenuOptionListener {
+        void onOptionClicked(String key, String option);
     }
 
 }

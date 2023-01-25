@@ -4,6 +4,7 @@ module com.avt.quantt {
     requires com.formdev.flatlaf;
     requires java.desktop;
     requires javafx.swing;
+    requires org.jetbrains.annotations;
 
 
     opens com.avt.quantt to javafx.fxml;
