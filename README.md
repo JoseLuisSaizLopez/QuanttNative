@@ -85,3 +85,8 @@ Esta es una pequeña introducción para configurar la estética de la ventana
     .add(QuanttNative.ParamKey.SIZE_DIMENSION, new Dimension(width, height))
     //..
 ```
+
+## Demo
+
+Este es un ejemplo de un marco creado con Quantt Native en Windows 11
+![demo](https://github.com/JoseLuisSaizLopez/QuanttNative/blob/master/qnative-demo.png)
