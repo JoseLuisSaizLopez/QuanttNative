@@ -1,17 +1,32 @@
 package com.avt.quantt;
 
 import com.formdev.flatlaf.FlatDarkLaf;
+import com.formdev.flatlaf.ui.FlatPopupMenuBorder;
 import javafx.application.Platform;
 import javafx.embed.swing.JFXPanel;
 import javafx.fxml.FXMLLoader;
+import javafx.scene.Node;
 import javafx.scene.Scene;
 
 import javax.imageio.ImageIO;
-import javax.swing.*;
-import java.awt.*;
+import javax.swing.Icon;
+import javax.swing.ImageIcon;
+import javax.swing.JFrame;
+import javax.swing.JMenu;
+import javax.swing.JMenuBar;
+import javax.swing.JMenuItem;
+import javax.swing.UIManager;
+import java.awt.Color;
+import java.awt.Dimension;
+import java.awt.Image;
+import java.awt.Insets;
+import java.awt.event.ComponentAdapter;
+import java.awt.event.ComponentEvent;
 import java.io.IOException;
 import java.net.URL;
-import java.util.*;
+import java.util.HashMap;
+import java.util.LinkedHashMap;
+import java.util.Map;
 
 public class QuanttNative {
 
@@ -28,6 +43,8 @@ public class QuanttNative {
     private Dimension size = new Dimension(600, 320);
     private QParams params;
     private QTitleMenu titleMenu;
+    private QCoordinate coordinate;
+    private Map<Node, TitlePropertiesComposer> titleComposers = new HashMap<>();
 
 
 
@@ -89,6 +106,10 @@ public class QuanttNative {
         this.scene = scene;
     }
 
+    public Scene getScene() {
+        return this.scene;
+    }
+
     public void setSize(int width, int height) {
         if (rootPane!=null) {
             rootPane.setSize(width, height);
@@ -113,6 +134,26 @@ public class QuanttNative {
         return this;
     }
 
+    public QTitleMenu getTitleMenu() {
+        return this.titleMenu;
+    }
+
+    public QParams getParams() {
+        return this.params;
+    }
+
+    public void setX(int x) {
+        this.coordinate.setX(x);
+    }
+
+    public void setY(int y) {
+        this.coordinate.setY(y);
+    }
+
+    public void setPosition(int x, int y) {
+        this.coordinate.setXY(x, y);
+    }
+
 
 
     /*
@@ -135,7 +176,9 @@ public class QuanttNative {
                     .add(ParamKey.TITLE_STRING, "Quantt Application")
                     .add(ParamKey.TITLEBAR_BACKGROUND_COLOR, new Color(0xFF2F3962))
                     .add(ParamKey.TITLEBAR_FOREGROUND_COLOR, new Color(0xD1D7DC))
-                    .add(ParamKey.ICON_IMAGE, icon);
+                    .add(ParamKey.ICON_IMAGE, icon)
+                    .add(ParamKey.CENTER_ON_SCREEN_BOOLEAN, true)
+                    .add(ParamKey.RESIZABLE_BOOLEAN, true);
         } catch (IOException e) {
             e.printStackTrace();
         }
@@ -153,6 +196,11 @@ public class QuanttNative {
             //Foreground color
             Color foregroundColor = createForegroundColor((Color) params.params.get(ParamKey.TITLEBAR_BACKGROUND_COLOR));
 
+            //PopUp menu
+            UIManager.put("PopupMenu.borderInsets", new Insets(0,0,0,0));
+            UIManager.put("PopupMenu.borderColor", new Color(0x5CFFFFFF, true)); //transparent
+            UIManager.put("PopupMenu.border", new FlatPopupMenuBorder());
+
             //Menu bar
             UIManager.put("MenuBar.foreground", params.params.get(ParamKey.TITLEBAR_FOREGROUND_COLOR)); //transparent
             UIManager.put("MenuBar.hoverBackground", new Color(0x0000000, true)); //transparent
@@ -162,10 +210,12 @@ public class QuanttNative {
             //Menu item
             UIManager.put("MenuItem.opaque", true);
             UIManager.put("MenuItem.foreground",  getSimilarColor((Color) params.params.get(ParamKey.TITLEBAR_FOREGROUND_COLOR), 0.05f, 0f));
-            UIManager.put("MenuItem.background", getSimilarColor((Color) params.params.get(ParamKey.TITLEBAR_BACKGROUND_COLOR), 0.05f, -0.1f));
+            UIManager.put("MenuItem.background", getSimilarColor((Color) params.params.get(ParamKey.TITLEBAR_BACKGROUND_COLOR), 0.05f, -0.3f));
             UIManager.put("MenuItem.selectionBackground", getSimilarColor((Color) params.params.get(ParamKey.TITLEBAR_BACKGROUND_COLOR), 0.1f, -0.1f));
             UIManager.put("MenuItem.selectionForeground", params.params.get(ParamKey.TITLEBAR_FOREGROUND_COLOR));
             UIManager.put("MenuItem.disabledForeground", getSimilarColor((Color) params.params.get(ParamKey.TITLEBAR_FOREGROUND_COLOR), 0.2f, 0.1f, 0.35f));
+
+
 
         } catch( Exception ex ) {
             System.err.println( "Failed to initialize LaF" );
@@ -187,6 +237,10 @@ public class QuanttNative {
             rootPane.setJMenuBar(menuBar);
         }
 
+        //Set resizable
+        rootPane.setResizable(Boolean.TRUE.equals(params.getBoolean(ParamKey.RESIZABLE_BOOLEAN)));
+
+
         //Create viewport
         JFXPanel jfxPanel = new JFXPanel();
         rootPane.add(jfxPanel);
@@ -197,10 +251,69 @@ public class QuanttNative {
         rootPane.setVisible(true);
         rootPane.setSize(params.getDimension(ParamKey.SIZE_DIMENSION));
 
+        //Set center on screen
+        if (Boolean.TRUE.equals(params.getBoolean(ParamKey.CENTER_ON_SCREEN_BOOLEAN))) {
+            rootPane.setLocationRelativeTo(null);
+        }
+
+        //Set position by coordinates
+        coordinate = params.getQCoordinate(ParamKey.POSITION_QCOORDINATE);
+        if (coordinate!=null) {
+            rootPane.setLocation(coordinate.x, coordinate.y);
+        } else {
+            coordinate = new QCoordinate(rootPane.getX(), rootPane.getY());
+        }
+        rootPane.addComponentListener(new ComponentAdapter() {
+            public void componentMoved(ComponentEvent e) {
+                coordinate.x = e.getComponent().getX();
+                coordinate.y = e.getComponent().getY();
+            }
+        });
+        coordinate.setOnChangedListener((x, y) -> rootPane.setLocation(x, y));
+
+
         //Add scene
         Platform.runLater(() -> jfxPanel.setScene(scene));
     }
 
+    public void addTitleProperties(Node node) {
+        titleComposers.put(node, new TitlePropertiesComposer(node, rootPane));
+    }
+
+    public void removeTitleProperties(Node node) {
+        node.setOnMousePressed(null);
+        node.setOnMouseDragged(null);
+        titleComposers.remove(node);
+    }
+
+
+    /*
+    ==========================================
+    =  Title properties                      =
+    ==========================================
+    */
+    public static class TitlePropertiesComposer {
+
+        private int x, y;
+
+        public TitlePropertiesComposer(Node node, JFrame rootPane) {
+            //For moving
+            node.setOnMousePressed(event -> {
+                x = (int) event.getSceneX();
+                y = (int) event.getSceneY();
+            });
+            node.setOnMouseDragged(event -> {
+                int x2 = (int) event.getScreenX();
+                int y2 = (int) event.getScreenY();
+
+                double width = node.getBoundsInLocal().getWidth();
+                double height = node.getBoundsInLocal().getHeight();
+
+                rootPane.setLocation((int) (x2 - x), (int) (y2 - y - height));
+            });
+        }
+
+    }
 
 
     /*
@@ -311,6 +424,24 @@ public class QuanttNative {
             }
         }
 
+        private Boolean getBoolean(ParamKey key) {
+            Object value = params.get(key);
+            if (value instanceof Boolean) {
+                return (boolean) value;
+            } else {
+                return null;
+            }
+        }
+
+        private QCoordinate getQCoordinate(ParamKey key) {
+            Object value = params.get(key);
+            if (value instanceof QCoordinate) {
+                return (QCoordinate) value;
+            } else {
+                return null;
+            }
+        }
+
     }
 
     //Supported keys
@@ -319,9 +450,67 @@ public class QuanttNative {
         TITLEBAR_FOREGROUND_COLOR,
         TITLE_STRING,
         SIZE_DIMENSION,
-        ICON_IMAGE
+        ICON_IMAGE,
+        CENTER_ON_SCREEN_BOOLEAN,
+        POSITION_QCOORDINATE,
+        RESIZABLE_BOOLEAN
     }
 
+
+    /*
+    ==========================================
+    =  Coordinates                           =
+    ==========================================
+    */
+    public static class QCoordinate {
+
+        private int x, y;
+        private CoordinateChanged onChangedListener;
+
+        public QCoordinate(int x, int y) {
+            this.x = x;
+            this.y = y;
+        }
+
+        public int getX() {
+            return x;
+        }
+
+        public void setX(int x) {
+            this.x = x;
+            callChanged();
+        }
+
+        public int getY() {
+            return y;
+        }
+
+        public void setY(int y) {
+            this.y = y;
+            callChanged();
+        }
+
+        public void setXY(int x, int y) {
+            this.x = x;
+            this.y = y;
+            callChanged();
+        }
+
+        private void callChanged() {
+            if (onChangedListener!=null) {
+                onChangedListener.changed(x, y);
+            }
+        }
+
+        private void setOnChangedListener(CoordinateChanged listener) {
+            this.onChangedListener = listener;
+        }
+
+        private interface CoordinateChanged {
+            void changed(int x, int y);
+        }
+
+    }
 
 
     /*
@@ -352,13 +541,20 @@ public class QuanttNative {
                     //Set icon
                 }
             }
-
             return menuPane;
         }
 
         public QTitleMenu addMenuOptionListener(MenuOptionListener listener) {
             this.menuListener = listener;
             return this;
+        }
+
+        public Option[] getMenuOptions(String title) {
+            return this.menus.get(title);
+        }
+
+        public LinkedHashMap<String, Option[]> getMenus() {
+            return this.menus;
         }
 
     }
