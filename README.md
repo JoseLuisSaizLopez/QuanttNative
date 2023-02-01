@@ -45,7 +45,7 @@ Y también añada la dependencia de esta forma:
 Si aparte de Maven, usted trabaja con un sistema modular de dependencias, deberá añadir esta línea dentro de su archivo module-info.java
 
 ```java
-requires maven.embedder;
+requires com.avt.quantt;
 ```
 
 <br>
