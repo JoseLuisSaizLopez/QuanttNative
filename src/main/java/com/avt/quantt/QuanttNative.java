@@ -226,6 +226,9 @@ public class QuanttNative {
         //Create rootPane
         rootPane = new JFrame(params.getString(ParamKey.TITLE_STRING));
 
+        //Set exit on close
+        rootPane.setDefaultCloseOperation(JFrame.EXIT_ON_CLOSE);
+
         //Create embed menu bar
         if (titleMenu!=null && !titleMenu.menus.isEmpty()) {
             JMenuBar menuBar = new JMenuBar();
