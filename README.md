@@ -7,10 +7,48 @@ Librería para Java, utiliza un espacio entre el ensamblaje nativo del sistema o
 
 ## ¿Cómo funciona?
 Utiliza el marco de composición Java Swing para acceder a la decoración nativa del S.O, luego renderiza en su interior una Scene de la suit JavaFX para aumentar la customización y continuar diseñando la App a través de este framework.
+
+<br><br>
+
 ## QuickStart
 
 Para empezar a utilizar QuanttNative, descargue el archivo .jar y añádalo como librería dentro de su proyecto de JavaFX.
-[Download last release](https://github.com/JoseLuisSaizLopez/QuanttNative/releases/tag/V1.0)
+[Download last release](https://github.com/JoseLuisSaizLopez/QuanttNative/releases/tag/V1.1)
+
+<br>
+
+### Maven
+
+Si usted está utilizando Maven, dentro del archivo pom.xml deberá establecer la ruta del archivo dentro de su proyecto:
+```xml
+    <repositories>
+        <repository>
+            <id>quantt-repo</id> <!--example id-->
+            <url>file://${project.basedir}/lib</url> <!--example path-->
+        </repository>
+    </repositories>
+```
+
+Y también añada la dependencia de esta forma:
+```xml
+        <dependency>
+            <groupId>com.avt</groupId>
+            <artifactId>quantt</artifactId>
+            <version>1.1-Alphabet</version>
+        </dependency>
+```
+
+<br>
+
+#### Module system
+
+Si aparte de Maven, usted trabaja con un sistema modular de dependencias, deberá añadir esta línea dentro de su archivo module-info.java
+
+```java
+requires maven.embedder;
+```
+
+<br>
 
 Una vez añadido, utilice la clase QuanttNative para generar una ventana nativa del sistema con la personalización que desee.
 
@@ -45,6 +83,8 @@ public class QuanttDemo extends Application {
     }
 }
 ```
+<br><br>
+
 ## Guía de estilos
 
 Esta es una pequeña introducción para configurar la estética de la ventana
@@ -85,6 +125,47 @@ Esta es una pequeña introducción para configurar la estética de la ventana
     .add(QuanttNative.ParamKey.SIZE_DIMENSION, new Dimension(width, height))
     //..
 ```
+
+<br><br>
+
+## Crear un menu de acceso rápido
+
+Si desea incluir un menu de acceso rápido dentro de su aplicación, pruebe a seguir este ejemplo durante la creación de su aplicación:
+
+```java
+        //Load QNative
+        QuanttNative qNative = new QuanttNative(
+                //Menu composer
+                new QuanttNative.QTitleMenu()
+                        .addMenu("File", new QuanttNative.Option[]{
+                                new QuanttNative.Option("Create new project"),
+                                new QuanttNative.Option("Open project"),
+                                new QuanttNative.Option("Close project", false),            //Disabled
+                                new QuanttNative.Option("Save", false),                     //Disabled
+                                new QuanttNative.Option("Save as...", false),               //Disabled
+                                new QuanttNative.Option("Exit")
+                        })
+                        .addMenu("Edit", new QuanttNative.Option[]{
+                                new QuanttNative.Option("Undo last", false),                //Disabled
+                                new QuanttNative.Option("Redo last", false),                //Disabled
+                                new QuanttNative.Option("Change color...", false),          //Disabled
+                                new QuanttNative.Option("Edit configurations...", false)    //Disabled
+                        })
+                        .addMenu("Help", new QuanttNative.Option[]{
+                                new QuanttNative.Option("Open web support", true)
+                        })
+        );
+
+        qNative.getTitleMenu().addMenuOptionListener((key, option) -> {
+            switch (option) {
+                case "Exit": System.exit(0); break;
+                default: System.out.println(option); break;
+            }
+        });
+```
+
+
+<br><br>
 
 ## Demo
 
