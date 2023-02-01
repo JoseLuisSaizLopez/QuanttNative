@@ -164,6 +164,8 @@ Si desea incluir un menu de acceso rápido dentro de su aplicación, pruebe a se
         });
 ```
 
+![menu-composer](https://github.com/JoseLuisSaizLopez/QuanttNative/blob/master/menu-composer.png)
+
 
 <br><br>
 
